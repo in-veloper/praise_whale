@@ -1,7 +1,7 @@
-import { RouteProp, useRoute } from "@react-navigation/native";
-import { JSX, useEffect, useState } from "react";
-import { Dimensions, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { MMKV } from "react-native-mmkv";
+import { RouteProp, useRoute } from "@react-navigation/native"
+import { JSX, useEffect, useState } from "react"
+import { Dimensions, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { MMKV } from "react-native-mmkv"
 
 const { width } = Dimensions.get('window')
 const storage = new MMKV()
@@ -99,7 +99,6 @@ const StickerBoard = () => {
         )
     }
     
-
     return (
         <View style={styles.container}>
             {/* <Image source={require('')} style={styles.background} resizeMode="cover" /> */}
