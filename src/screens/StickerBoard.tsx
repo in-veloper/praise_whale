@@ -1,7 +1,8 @@
-import { RouteProp, useRoute } from "@react-navigation/native"
-import { JSX, useEffect, useState } from "react"
-import { Dimensions, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native"
-import { MMKV } from "react-native-mmkv"
+import { RouteProp, useRoute } from '@react-navigation/native'
+import LottieView from 'lottie-react-native'
+import { JSX, useEffect, useState } from 'react'
+import { Dimensions, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { MMKV } from 'react-native-mmkv'
 
 const { width } = Dimensions.get('window')
 const storage = new MMKV()
@@ -17,6 +18,7 @@ const StickerBoard = () => {
     const { person } = route.params
     const [bubbleCount, setBubbleCount] = useState(30)
     const [filled, setFilled] = useState<boolean[]>(Array(bubbleCount).fill(false))
+    const [animatingIndex, setAnimatingIndex] = useState<number | null>(null)
 
     useEffect(() => {
         const saved = storage.getString(`stickers_${person.id}`)
@@ -43,46 +45,75 @@ const StickerBoard = () => {
     const handlePress = (index: number) => {
         setFilled((prev) => {
             const updated = [...prev]
-            updated[index] = true
+            updated[index] = !updated[index]
             saveToStorage(updated, bubbleCount)
+
+            if(updated[index]) {
+                setAnimatingIndex(index)
+                setTimeout(() => {
+                    setAnimatingIndex(null)
+                }, 1000)
+            }
+
             return updated
         })
     }
 
     const getSize = () => {
-        if (bubbleCount === 10) return 50;
-        if (bubbleCount === 20) return 42;
-        return 36;
+        if (bubbleCount === 10) return 69
+        if (bubbleCount === 20) return 68
+        return 54
     };
 
     const renderBubbles = () => {
-        const bubbleSize = getSize();
-        const bubbles: JSX.Element[] = [];
+        const bubbleSize = getSize()
+        const bubbles: JSX.Element[] = []
     
         for (let i = 0; i < bubbleCount; i++) {
             bubbles.push(
                 <TouchableOpacity
                     key={i}
-                    onPress={() => {
-                        console.log(i)
-                        handlePress(i)}
-                    }
+                    onPress={() => handlePress(i)}
                     style={{
                         width: bubbleSize,
                         height: bubbleSize,
                         borderRadius: bubbleSize / 2,
                         margin: 6,
+                        marginLeft: bubbleCount === 10 ? 40 : undefined,
+                        marginRight: bubbleCount === 10 ? 40 : undefined,
                         justifyContent: 'center',
                         alignItems: 'center',
-                        backgroundColor: '#DDD',
+                        backgroundColor: '#FFF',
+                        borderColor: '#BEE1ED',
+                        borderWidth: 1
                     }}
                 >
                     {filled[i] && (
-                        <Image
-                            source={require('../../assets/image/whale_sticker.png')}
-                            style={{ width: bubbleSize * 0.9, height: bubbleSize * 0.9 }}
-                            resizeMode="contain"
-                        />
+                        <>
+                            <Image
+                                source={require('../../assets/image/whale_sticker.png')}
+                                style={{ 
+                                    width: bubbleSize * 0.9, 
+                                    height: bubbleSize * 0.9,
+                                    position: 'absolute',
+                                    zIndex: 1 
+                                }}
+                                resizeMode="contain"
+                            />
+                            {animatingIndex === i && (
+                                <LottieView
+                                    source={require('../../assets/lottie/sticker_effect.json')}
+                                    autoPlay
+                                    loop
+                                    style={{
+                                        width: bubbleSize * 1.5,
+                                        height: bubbleSize * 1.5,
+                                        position: 'absolute',
+                                        zIndex: 2
+                                    }}
+                                />
+                            )}
+                        </>
                     )}
                 </TouchableOpacity>
             )
@@ -124,7 +155,8 @@ export default StickerBoard
 const styles = StyleSheet.create({
     container: { 
         flex: 1, 
-        position: 'relative' 
+        position: 'relative',
+        backgroundColor: '#FFF'
     },
     background: { 
         position: 'absolute', 
@@ -167,14 +199,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: '#FFF',
         padding: 20,
         borderRadius: 16,
         shadowColor: '#000',
         shadowOpacity: 0.1,
         shadowOffset: { width: 0, height: 2 },
         shadowRadius: 4,
-        elevation: 3,
+        elevation: 5,
     },
     bubbleRow: {
         flexDirection: 'row',
@@ -195,13 +227,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'flex-end',
         marginRight: -7
-    },
-    bubble: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        marginHorizontal: 4,
-        backgroundColor: '#ddd',
     },
     activeBubble: {
         backgroundColor: '#FFD700',

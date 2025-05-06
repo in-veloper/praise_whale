@@ -14,9 +14,9 @@ const App = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <NavigationContainer>
-          <Stack.Navigator>
-            <Stack.Screen name='Home' component={HomeScreen} />
-            <Stack.Screen name='StickerBoard' component={StickerBoard} />
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="StickerBoard" component={StickerBoard} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>
