@@ -13,42 +13,77 @@ interface Person {
     stickerCount: number
 }
 
+interface StickerState {
+    index: number
+    filled: boolean
+}
+
 const StickerBoard = () => {
     const route = useRoute<RouteProp<{ params: { person: Person } }, 'params'>>()
     const { person } = route.params
     const [bubbleCount, setBubbleCount] = useState(30)
-    const [filled, setFilled] = useState<boolean[]>(Array(bubbleCount).fill(false))
+    const [filled, setFilled] = useState<StickerState[]>([])
     const [animatingIndex, setAnimatingIndex] = useState<number | null>(null)
+
+    const getStoreKey = (personId: string, count: number) => {
+        return `stickers_${personId}_${count}`
+    }
 
     useEffect(() => {
         const saved = storage.getString(`stickers_${person.id}`)
         if(saved) {
             const parsed = JSON.parse(saved)
             setBubbleCount(parsed.count)
-            setFilled(parsed.filled)
+
+            const loadedFilled: StickerState[] = parsed.stickers || []
+            setFilled(loadedFilled)
         }else{
-            setFilled(Array(bubbleCount).fill(false))
+            setFilled([])
         }
     }, [person.id])
 
-    const saveToStorage = (nextFilled: boolean[], count: number) => {
-        storage.set(`stickers_${person.id}`, JSON.stringify({ filled: nextFilled, count }))
+    const saveToStorage = (stickers: StickerState[], count: number) => {
+        const key = getStoreKey(person.id, count)
+        storage.set(key, JSON.stringify({ stickers, count }))
+    }
+
+    const loadFromStorage = (count: number) => {
+        const key = getStoreKey(person.id, count)
+        const saved = storage.getString(key)
+
+        if(saved) {
+            const parsed = JSON.parse(saved)
+            setBubbleCount(parsed.count)
+            const loadedFilled: StickerState[] = parsed.stickers || []
+            setFilled(loadedFilled)
+        }else{
+            setFilled([])
+        }
     }
 
     const handleCountChange = (count: number) => {
-        const newFilled = Array(count).fill(false)
         setBubbleCount(count)
-        setFilled(newFilled)
-        saveToStorage(newFilled, count)
+        loadFromStorage(count)
     }
+
+    useEffect(() => {
+        loadFromStorage(bubbleCount)
+    }, [person.id])
 
     const handlePress = (index: number) => {
         setFilled((prev) => {
             const updated = [...prev]
-            updated[index] = !updated[index]
+            const existingIndex = updated.findIndex(sticker => sticker.index === index)
+
+            if(existingIndex !== -1) {
+                updated[existingIndex].filled = !updated[existingIndex].filled
+            }else{
+                updated.push({ index, filled: true })
+            }
+
             saveToStorage(updated, bubbleCount)
 
-            if(updated[index]) {
+            if(updated[existingIndex]?.filled || existingIndex === -1) {
                 setAnimatingIndex(index)
                 setTimeout(() => {
                     setAnimatingIndex(null)
@@ -70,6 +105,8 @@ const StickerBoard = () => {
         const bubbles: JSX.Element[] = []
     
         for (let i = 0; i < bubbleCount; i++) {
+            const isFilled = filled.find(sticker => sticker.index === i)?.filled || false
+
             bubbles.push(
                 <TouchableOpacity
                     key={i}
@@ -88,7 +125,7 @@ const StickerBoard = () => {
                         borderWidth: 1
                     }}
                 >
-                    {filled[i] && (
+                    {isFilled && (
                         <>
                             <Image
                                 source={require('../../assets/image/whale_sticker.png')}
