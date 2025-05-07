@@ -2,6 +2,7 @@ import { RouteProp, useRoute } from '@react-navigation/native'
 import LottieView from 'lottie-react-native'
 import { JSX, useEffect, useState } from 'react'
 import { Dimensions, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import DropDownPicker from 'react-native-dropdown-picker'
 import { MMKV } from 'react-native-mmkv'
 
 const { width } = Dimensions.get('window')
@@ -24,6 +25,13 @@ const StickerBoard = () => {
     const [bubbleCount, setBubbleCount] = useState(30)
     const [filled, setFilled] = useState<StickerState[]>([])
     const [animatingIndex, setAnimatingIndex] = useState<number | null>(null)
+    const [open, setOpen] = useState(false)
+    const [value, setValue] = useState<number>(30)
+    const [items, setItems] = useState([
+        { label: '10개', value: 10 },
+        { label: '20개', value: 20 },
+        { label: '30개', value: 30 }
+    ])
 
     const getStoreKey = (personId: string, count: number) => {
         return `stickers_${personId}_${count}`
@@ -63,6 +71,7 @@ const StickerBoard = () => {
 
     const handleCountChange = (count: number) => {
         setBubbleCount(count)
+        setValue(count)
         loadFromStorage(count)
     }
 
@@ -170,17 +179,24 @@ const StickerBoard = () => {
     return (
         <View style={styles.container}>
             {/* <Image source={require('')} style={styles.background} resizeMode="cover" /> */}
+            <View style={styles.headerRow}>
+                <DropDownPicker
+                    open={open}
+                    value={value}
+                    items={items}
+                    setOpen={setOpen}
+                    setValue={setValue}
+                    setItems={setItems}
+                    onChangeValue={(count) => handleCountChange(count as number)}
+                    containerStyle={{ width: 150 }}
+                    style={{ backgroundColor: '#FFF' }}
+                    dropDownContainerStyle={{ backgroundColor: '#FFF' }}
+                    labelStyle={{ fontWeight: 'bold', color: '#000' }}
+                    textStyle={{ fontSize: 15 }}
+                />
+            </View>
             <View style={styles.overlay}>
                 <Text style={styles.title}>{person.name}님의 칭찬 스티커판</Text>
-
-                <View style={styles.buttonRow}>
-                    {[10, 20, 30].map((count) => (
-                        <TouchableOpacity key={count} style={[styles.countButton, bubbleCount === count && styles.selectedButton]} onPress={() => handleCountChange(count)}>
-                            <Text style={styles.countText}>{count}개</Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
                 {<View style={styles.bubbleContainer}>{renderBubbles()}</View>}
             </View>
         </View>
@@ -228,6 +244,11 @@ const styles = StyleSheet.create({
     countText: {
         color: '#000',
         fontWeight: 'bold',
+    },
+    headerRow: {
+        marginTop: 20,
+        marginBottom: 20,
+        alignItems: 'center'
     },
     bubbleContainer: {
         alignItems: 'center',
