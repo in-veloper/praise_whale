@@ -250,11 +250,6 @@ const styles = StyleSheet.create({
         position: 'relative',
         backgroundColor: '#FFF'
     },
-    background: { 
-        position: 'absolute', 
-        width: '100%', 
-        height: '100%' 
-    },
     overlay: { 
         flex: 1, 
         justifyContent: 'center', 
@@ -266,30 +261,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold', 
         marginBottom: 20 
     },
-    buttonRow: {
-        flexDirection: 'row',
-        marginBottom: 20,
-    },
-    countButton: {
-        backgroundColor: '#eee',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        marginHorizontal: 5,
-        borderRadius: 8,
-    },
-    selectedButton: {
-        backgroundColor: '#227DBD',
-    },
-    countText: {
-        color: '#000',
-        fontWeight: 'bold',
-    },
     headerRow: {
         marginTop: 20,
         marginBottom: 20,
         alignItems: 'center',
         flexDirection: 'row',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        gap: 10
     },
     bubbleContainer: {
         alignItems: 'center',
@@ -307,28 +285,4 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 5,
     },
-    bubbleRow: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginVertical: 6,
-    },
-    firstRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between', 
-        width: width - 60, 
-    },
-    leftGroup: {
-        flexDirection: 'row',
-        justifyContent: 'flex-start',
-        marginLeft: 20
-    },
-    rightGroup: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        marginRight: -7
-    },
-    activeBubble: {
-        backgroundColor: '#FFD700',
-    },
 })
-  
