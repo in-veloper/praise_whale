@@ -25,16 +25,40 @@ const StickerBoard = () => {
     const [bubbleCount, setBubbleCount] = useState(30)
     const [filled, setFilled] = useState<StickerState[]>([])
     const [animatingIndex, setAnimatingIndex] = useState<number | null>(null)
-    const [open, setOpen] = useState(false)
+    const [stickerType, setStickerType] = useState<string>('whale')
+    const [countDropDownOpen, setCountDropDownOpen] = useState(false)
+    const [stickerDropDownOpen, setStickerDropDownOpen] = useState(false)
     const [value, setValue] = useState<number>(30)
     const [items, setItems] = useState([
         { label: '10개', value: 10 },
         { label: '20개', value: 20 },
         { label: '30개', value: 30 }
     ])
+    const [stickerItems, setStickerItems] = useState([
+        { label: '고래', value: 'whale' },
+        { label: '불가사리', value: 'starfish' },
+        { label: '상어', value: 'shark' },
+        { label: '게', value: 'crab' },
+        { label: '문어', value: 'octopus' }
+    ])
 
     const getStoreKey = (personId: string, count: number) => {
         return `stickers_${personId}_${count}`
+    }
+
+    const getStickerImage = () => {
+        switch (stickerType) {
+            case 'starfish':
+                return require('../../assets/image/starfish_sticker.png')
+            case 'shark':
+                return require('../../assets/image/shark_sticker.png')
+            case 'crab':
+                return require('../../assets/image/crab_sticker.png')
+            case 'octopus':
+                return require('../../assets/image/octopus_sticker.png')
+            default:
+                return require('../../assets/image/whale_sticker.png')
+        }
     }
 
     useEffect(() => {
@@ -137,7 +161,8 @@ const StickerBoard = () => {
                     {isFilled && (
                         <>
                             <Image
-                                source={require('../../assets/image/whale_sticker.png')}
+                                // source={require('../../assets/image/whale_sticker.png')}
+                                source={getStickerImage()}
                                 style={{ 
                                     width: bubbleSize * 0.9, 
                                     height: bubbleSize * 0.9,
@@ -181,13 +206,27 @@ const StickerBoard = () => {
             {/* <Image source={require('')} style={styles.background} resizeMode="cover" /> */}
             <View style={styles.headerRow}>
                 <DropDownPicker
-                    open={open}
+                    open={countDropDownOpen}
                     value={value}
                     items={items}
-                    setOpen={setOpen}
+                    setOpen={setCountDropDownOpen}
                     setValue={setValue}
                     setItems={setItems}
                     onChangeValue={(count) => handleCountChange(count as number)}
+                    containerStyle={{ width: 150 }}
+                    style={{ backgroundColor: '#FFF' }}
+                    dropDownContainerStyle={{ backgroundColor: '#FFF' }}
+                    labelStyle={{ fontWeight: 'bold', color: '#000' }}
+                    textStyle={{ fontSize: 15 }}
+                />
+                <DropDownPicker
+                    open={stickerDropDownOpen}
+                    value={stickerType}
+                    items={stickerItems}
+                    setOpen={setStickerDropDownOpen}
+                    setValue={setStickerType}
+                    setItems={setStickerItems}
+                    onChangeValue={(type) => setStickerType(type as string)}
                     containerStyle={{ width: 150 }}
                     style={{ backgroundColor: '#FFF' }}
                     dropDownContainerStyle={{ backgroundColor: '#FFF' }}
@@ -248,7 +287,9 @@ const styles = StyleSheet.create({
     headerRow: {
         marginTop: 20,
         marginBottom: 20,
-        alignItems: 'center'
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center'
     },
     bubbleContainer: {
         alignItems: 'center',
