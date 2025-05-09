@@ -6,7 +6,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { PraisePerson, StickerState, usePraiseStore } from '../store/store'
 
 const HomeScreen = () => {
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<any>()
     const [newName, setNewName] = useState('')
     const { people, addPerson, removePerson, loadPeople } = usePraiseStore()
 

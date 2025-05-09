@@ -17,13 +17,25 @@ export interface PraisePerson {
     stickerType: string
 }
 
+export interface CompletedStickerBoard {
+    id: string
+    name: string
+    stickerCount: number
+    completedAt: string
+    reward?: string
+}
+
 interface PraiseStore {
     people: PraisePerson[]
+    completedBoards: CompletedStickerBoard[]
     addPerson: (name: string) => void
     removePerson: (id: string) => void
     updateStickers: (id: string, count: number, stickers: StickerState[]) => void
     updateStickerType: (id: string, type: string) => void
     loadPeople: () => void
+    addCompletedBoard: (board: CompletedStickerBoard) => void
+    loadCompletedBoards: () => void
+    updateCompletedBoard: (id: string, reward: string) => void
 }
 
 const storage = new MMKV()
@@ -31,6 +43,7 @@ const STORAGE_KEY = 'praise_people'
 
 export const usePraiseStore = create<PraiseStore>((set) => ({
     people: [],
+    completedBoards: [],
     addPerson: (name) => set((state) => {
         const newPerson: PraisePerson = {
             id: uuid.v4().toString(),
@@ -65,5 +78,21 @@ export const usePraiseStore = create<PraiseStore>((set) => ({
     loadPeople: () => set(() => {
         const saved = storage.getString(STORAGE_KEY)
         return { people: saved ? JSON.parse(saved) : []}
+    }),
+    addCompletedBoard: (board) => set((state) => {
+        const updatedBoards = [...state.completedBoards, board]
+        storage.set("completed_boards", JSON.stringify(updatedBoards))
+        return { completedBoards: updatedBoards }
+    }),
+    loadCompletedBoards: () => set(() => {{
+        const saved = storage.getString("completed_boards")
+        return { completedBoards: saved ? JSON.parse(saved) : [] }
+    }}),
+    updateCompletedBoard: (id, reward) => set((state) => {
+        const updatedBoards = state.completedBoards.map((board) => 
+            board.id === id ? { ...board, reward } : board
+        )
+        storage.set("completed_boards", JSON.stringify(updatedBoards))
+        return { completedBoards: updatedBoards }
     })
 }))

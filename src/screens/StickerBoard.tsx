@@ -1,15 +1,17 @@
-import { RouteProp, useRoute } from '@react-navigation/native'
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import LottieView from 'lottie-react-native'
 import { JSX, useEffect, useRef, useState } from 'react'
-import { Alert, Dimensions, Image, ImageBackground, PermissionsAndroid, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Dimensions, Image, ImageBackground, Modal, PermissionsAndroid, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import DropDownPicker from 'react-native-dropdown-picker'
 import { MMKV } from 'react-native-mmkv'
 import { usePraiseStore } from '../store/store'
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import Entypo from 'react-native-vector-icons/Entypo'
 import RNFS from 'react-native-fs'
 import ViewShot from 'react-native-view-shot'
 import { CameraRoll } from '@react-native-camera-roll/camera-roll'
+import uuid from 'react-native-uuid'
 
 const { width } = Dimensions.get('window')
 const storage = new MMKV()
@@ -26,6 +28,7 @@ interface StickerState {
 }
 
 const StickerBoard = () => {
+    const navigation = useNavigation<any>()
     const route = useRoute<RouteProp<{ params: { person: Person } }, 'params'>>()
     const { person } = route.params
     const [bubbleCount, setBubbleCount] = useState(30)
@@ -35,7 +38,13 @@ const StickerBoard = () => {
     const [countDropDownOpen, setCountDropDownOpen] = useState(false)
     const [stickerDropDownOpen, setStickerDropDownOpen] = useState(false)
     const [value, setValue] = useState<number>(30)
-    const { people, updateStickers, updateStickerType } = usePraiseStore()
+    const [isCompleted, setIsCompleted] = useState(false)
+    const [isListModalOpen, setIsListModalOpen] = useState(false)
+    const [isRewardModalOpen, setIsRewardModalOpen] = useState(false)
+    const [rewardText, setRewardText] = useState<string>('')
+    const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null)
+    const [selectedReward, setSelectedReward] = useState<string>('')
+    const { people, updateStickers, updateStickerType, addCompletedBoard, completedBoards, loadCompletedBoards, updateCompletedBoard } = usePraiseStore()
     const [items, setItems] = useState([
         { label: '10개', value: 10 },
         { label: '20개', value: 20 },
@@ -108,6 +117,7 @@ const StickerBoard = () => {
             }
 
             updateStickers(person.id, bubbleCount, updated)
+            checkCompletion(updated)
 
             if(updated[existingIndex]?.filled || existingIndex === -1) {
                 setAnimatingIndex(index)
@@ -182,6 +192,82 @@ const StickerBoard = () => {
             console.log("캡처 오류", error)
             Alert.alert("캡처 중 오류가 발생했습니다")
         })
+    }
+
+    const handleBack = () => {
+        navigation.goBack()
+    }
+
+    const resetStickers = () => {
+        Alert.alert(
+            '초기화',
+            `칭찬 스티커를 초기화하시겠습니까?`,
+            [
+                {
+                    text: '아니오',
+                    style: 'cancel'
+                },
+                {
+                    text: '예',
+                    onPress: () => {
+                        setFilled([])
+                        updateStickers(person.id, bubbleCount, [])
+                    }
+                }
+            ]
+        )
+    }
+
+    const checkCompletion = (stickers: StickerState[]) => {
+        if(stickers.length === bubbleCount && stickers.every(sticker => sticker.filled)) {
+            const completedAt = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+            addCompletedBoard({
+                id: uuid.v4().toString(),
+                name: person.name,
+                stickerCount: bubbleCount,
+                completedAt
+            })
+
+            setIsCompleted(true)
+        }
+    }
+
+    const handleConfirmCompleted = () => {
+        setIsCompleted(false)
+    }
+    
+    const handleResetCompleted = () => {
+        setFilled([])
+        updateStickers(person.id, bubbleCount, [])
+        setIsCompleted(false)
+    }
+
+    const handleOpenCompletedStickerBoard = () => {
+        setIsListModalOpen(true)
+    }
+
+    useEffect(() => {
+        loadCompletedBoards()
+    }, [])
+
+    const handleOpenRewardModal = (id: string, reward: string) => {
+        setSelectedBoardId(id)
+        setSelectedReward(reward)
+        setRewardText(reward)
+        setIsRewardModalOpen(true)
+    }
+
+    const handleCloseRewardModal = () => {
+        setIsRewardModalOpen(false)
+    }
+
+    const handleSaveReward = () => {
+        if(selectedBoardId) {
+            updateCompletedBoard(selectedBoardId, rewardText)
+        }
+        setIsRewardModalOpen(false)
+        setRewardText('')
+        setSelectedBoardId(null)
     }
 
     const renderBubbles = () => {
@@ -277,7 +363,7 @@ const StickerBoard = () => {
                         setValue={setValue}
                         setItems={setItems}
                         onChangeValue={(count) => handleCountChange(count as number)}
-                        containerStyle={{ width: 150 }}
+                        containerStyle={{ width: 100 }}
                         style={{ backgroundColor: '#FFF' }}
                         dropDownContainerStyle={{ backgroundColor: '#FFF' }}
                         labelStyle={{ fontWeight: 'bold', color: '#000' }}
@@ -291,14 +377,17 @@ const StickerBoard = () => {
                         setValue={setStickerType}
                         setItems={setStickerItems}
                         onChangeValue={(type) => handleStickerTypeChange(type ?? 'whale')}
-                        containerStyle={{ width: 150 }}
+                        containerStyle={{ width: 120 }}
                         style={{ backgroundColor: '#FFF' }}
                         dropDownContainerStyle={{ backgroundColor: '#FFF' }}
                         labelStyle={{ fontWeight: 'bold', color: '#000' }}
                         textStyle={{ fontSize: 15 }}
                     />
                     <TouchableOpacity onPress={captureStickerBoard}>
-                        <MaterialIcons name="screenshot" size={35} color="#333" />
+                        <MaterialIcons name="screenshot" size={33} color="#333" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleOpenCompletedStickerBoard}>
+                        <Entypo name="list" size={35} color="#333" />
                     </TouchableOpacity>
                 </View>
                 <ViewShot ref={shotRef} options={{ format: 'png', quality: 0.9 }}>
@@ -317,6 +406,14 @@ const StickerBoard = () => {
                         {<View style={styles.bubbleContainer}>{renderBubbles()}</View>}
                     </View>
                 </ViewShot>
+                <View style={styles.bottomButtonArea}>
+                    <TouchableOpacity onPress={handleBack} style={styles.bottomButton}>
+                        <Text style={styles.buttonText}>이전으로</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={resetStickers} style={styles.bottomButton}>
+                        <Text style={styles.buttonText}>초기화</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
             <View style={styles.bottomAdBanner}>
                 <BannerAd
@@ -331,6 +428,99 @@ const StickerBoard = () => {
                     }}
                 />
             </View>
+
+            {isCompleted && (
+                <Modal
+                    transparent={true}
+                    animationType='fade'
+                    visible={isCompleted}
+                    onRequestClose={() => setIsCompleted(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalText}>모든 스티커를 채웠어요!</Text>
+                            <View style={styles.modalButtonContainer}>
+                                <TouchableOpacity onPress={handleConfirmCompleted} style={styles.modalButton}>
+                                    <Text style={styles.modalButtonText}>확인</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={handleResetCompleted} style={styles.modalButton}>
+                                    <Text style={styles.modalButtonText}>초기화</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
+            )}
+
+            {isListModalOpen && (
+                <Modal
+                    transparent={true}
+                    animationType='fade'
+                    visible={isListModalOpen}
+                    onRequestClose={() => setIsListModalOpen(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.listModalContent}>
+                            <Text style={styles.listModalTitle}>완료된 칭찬 스티커 목록</Text>
+                            {completedBoards.length === 0 ? (
+                                <Text style={styles.noCompletedText}>아직 완료된 스티커 목록이 없어요!</Text>
+                            ) : (
+                                completedBoards.map((board) => (
+                                    <View key={board.id} style={[styles.completedCard, board.reward ? styles.rewardCompletedCard : null]}>
+                                        <Text>
+                                            {board.stickerCount}개짜리 스티커를 모두 채웠어요!
+                                        </Text>
+                                        <View style={styles.cardSecondRow}>
+                                            <Text>{board.name}</Text>
+                                            <Text>{board.completedAt}</Text>
+                                        </View>
+                                        <View style={styles.cardButtonRow}>
+                                            <TouchableOpacity onPress={() => handleOpenRewardModal(board.id, board.reward || '')} style={styles.cardButton}>
+                                                <Text style={styles.cardButtonText}>{board.reward ? '보상 완료' : '보상'}</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity style={styles.cardButton}>
+                                                <Text style={styles.cardButtonText}>삭제</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                ))
+                            )}
+                            <TouchableOpacity onPress={() => setIsListModalOpen(false)} style={styles.modalCloseButton}>
+                                <Text style={styles.modalButtonText}>닫기</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+            )}
+
+            {isRewardModalOpen && (
+                <Modal
+                    transparent={true}
+                    animationType='fade'
+                    visible={isRewardModalOpen}
+                    onRequestClose={handleCloseRewardModal}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.rewardModalContent}>
+                            <TextInput
+                                style={styles.rewardInput}
+                                placeholder='어떤 보상을 해주었나요?'
+                                value={rewardText}
+                                onChangeText={setRewardText}
+                                multiline={false}
+                            />
+                            <View style={styles.modalButtonContainer}>
+                                <TouchableOpacity onPress={handleSaveReward} style={styles.rewardModalButton}>
+                                    <Text style={styles.modalButtonText}>확인</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={handleCloseRewardModal} style={styles.rewardModalButton}>
+                                    <Text style={styles.modalButtonText}>취소</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
+            )}
         </View>
     )
 }
@@ -346,7 +536,7 @@ const styles = StyleSheet.create({
     contentContainer: {
         flex: 1,
         justifyContent: 'center',
-        marginTop: -90
+        marginTop: -80
     },
     topAdBanner: {
         height: 60,
@@ -365,9 +555,9 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         borderWidth: 1.5,
         borderColor: '#BEE1ED',
-        paddingVertical: 10,
+        paddingVertical: 7,
         paddingHorizontal: 15,
-        marginBottom: 20,
+        marginBottom: 10,
         alignItems: 'center',
         width: width * 0.9,
         flexDirection: 'row',
@@ -403,6 +593,46 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 5,
     },
+    cardSecondRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between'
+    },
+    cardButtonRow: {
+        flexDirection: 'row',
+        gap: 10,
+        alignSelf: 'flex-end',
+        marginTop: 3
+    },
+    cardButton: {
+        backgroundColor: '#227DBD',
+        padding: 1,
+        borderRadius: 5,
+        alignItems: 'center',
+        paddingHorizontal: 5
+    },
+    cardButtonText: {
+        color: '#FFF',
+        fontWeight: 'bold',
+    },
+    bottomButtonArea: {
+        alignItems: 'center',
+        backgroundColor: '#FFF',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 10,
+        marginTop: 15
+    },
+    bottomButton: {
+        backgroundColor: '#227DBD',
+        padding: 7,
+        borderRadius: 7,
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
     bottomAdBanner: {
         position: 'absolute',
         height: 60,
@@ -410,5 +640,106 @@ const styles = StyleSheet.create({
         backgroundColor: '#EEE',
         justifyContent: 'center',
         alignItems: 'center'
+    },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: '#FFF',
+        padding: 20,
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    modalText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    modalButtonContainer: {
+        alignSelf: 'flex-end',
+        flexDirection: 'row',
+        gap: 10
+    },
+    modalButton: {
+        backgroundColor: '#227DBD',
+        padding: 10,
+        borderRadius: 5,
+        marginTop: 10,
+    },
+    modalButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+    },
+    listModalContent: {
+        backgroundColor: '#FFF',
+        padding: 20,
+        borderRadius: 10,
+        alignItems: 'center',
+        maxWidth: '90%',
+    },
+    listModalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 15,
+    },
+    completedCard: {
+        backgroundColor: '#FFF',
+        borderWidth: 1.5,
+        borderColor: '#BEE1ED',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 8,
+        width: '100%',
+        fontSize: 16,
+        color: '#333',
+    },
+    rewardCompletedCard: {
+        backgroundColor: '#F0F0F0',
+        borderWidth: 1.5,
+        borderColor: '#BEE1ED',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 8,
+        width: '100%',
+        fontSize: 16,
+        color: '#333',
+    },
+    noCompletedText: {
+        fontSize: 16,
+        color: '#999',
+        marginBottom: 10,
+    },
+    modalCloseButton: {
+        backgroundColor: '#227DBD',
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        borderRadius: 5,
+        marginTop: 15,
+    },
+    rewardModalContent: {
+        backgroundColor: '#FFF',
+        padding: 20,
+        borderRadius: 10,
+        alignItems: 'center',
+        width: width * 0.6,
+    },
+    rewardInput: {
+        borderWidth: 1,
+        borderColor: '#DDD',
+        borderRadius: 5,
+        padding: 10,
+        marginTop: 10,
+        marginBottom: 15,
+        width: '100%',
+    },
+    rewardModalButton: {
+        backgroundColor: '#227DBD',
+        paddingVertical: 5,
+        paddingHorizontal: 7,
+        borderRadius: 5,
+        marginTop: 10,
     }
 })

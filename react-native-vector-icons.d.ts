@@ -5,3 +5,4 @@ declare module 'react-native-vector-icons/Octicons';
 declare module 'react-native-vector-icons/Feather';
 declare module 'react-native-vector-icons/FontAwesome';
 declare module 'react-native-vector-icons/Foundation';
+declare module 'react-native-vector-icons/Entypo';
