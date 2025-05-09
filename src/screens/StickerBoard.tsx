@@ -1,9 +1,15 @@
 import { RouteProp, useRoute } from '@react-navigation/native'
 import LottieView from 'lottie-react-native'
-import { JSX, useEffect, useState } from 'react'
-import { Dimensions, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { JSX, useEffect, useRef, useState } from 'react'
+import { Alert, Dimensions, Image, ImageBackground, PermissionsAndroid, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import DropDownPicker from 'react-native-dropdown-picker'
 import { MMKV } from 'react-native-mmkv'
+import { usePraiseStore } from '../store/store'
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads'
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import RNFS from 'react-native-fs'
+import ViewShot from 'react-native-view-shot'
+import { CameraRoll } from '@react-native-camera-roll/camera-roll'
 
 const { width } = Dimensions.get('window')
 const storage = new MMKV()
@@ -29,6 +35,7 @@ const StickerBoard = () => {
     const [countDropDownOpen, setCountDropDownOpen] = useState(false)
     const [stickerDropDownOpen, setStickerDropDownOpen] = useState(false)
     const [value, setValue] = useState<number>(30)
+    const { people, updateStickers, updateStickerType } = usePraiseStore()
     const [items, setItems] = useState([
         { label: '10개', value: 10 },
         { label: '20개', value: 20 },
@@ -42,9 +49,7 @@ const StickerBoard = () => {
         { label: '문어', value: 'octopus' }
     ])
 
-    const getStoreKey = (personId: string, count: number) => {
-        return `stickers_${personId}_${count}`
-    }
+    const shotRef = useRef<any>(null)
 
     const getStickerImage = () => {
         switch (stickerType) {
@@ -74,34 +79,22 @@ const StickerBoard = () => {
         }
     }, [person.id])
 
-    const saveToStorage = (stickers: StickerState[], count: number) => {
-        const key = getStoreKey(person.id, count)
-        storage.set(key, JSON.stringify({ stickers, count }))
-    }
-
-    const loadFromStorage = (count: number) => {
-        const key = getStoreKey(person.id, count)
-        const saved = storage.getString(key)
-
-        if(saved) {
-            const parsed = JSON.parse(saved)
-            setBubbleCount(parsed.count)
-            const loadedFilled: StickerState[] = parsed.stickers || []
-            setFilled(loadedFilled)
-        }else{
-            setFilled([])
-        }
-    }
-
     const handleCountChange = (count: number) => {
         setBubbleCount(count)
         setValue(count)
-        loadFromStorage(count)
     }
 
     useEffect(() => {
-        loadFromStorage(bubbleCount)
-    }, [person.id])
+        const foundPerson = people.find(p => p.id === person.id)
+        if(foundPerson) {
+            const stickers = foundPerson.stickers[bubbleCount] || []
+            setFilled(stickers)
+            setStickerType(foundPerson.stickerType)
+        }else{
+            setFilled([])
+            setStickerType('whale')
+        }
+    }, [person.id, bubbleCount])
 
     const handlePress = (index: number) => {
         setFilled((prev) => {
@@ -114,7 +107,7 @@ const StickerBoard = () => {
                 updated.push({ index, filled: true })
             }
 
-            saveToStorage(updated, bubbleCount)
+            updateStickers(person.id, bubbleCount, updated)
 
             if(updated[existingIndex]?.filled || existingIndex === -1) {
                 setAnimatingIndex(index)
@@ -128,10 +121,68 @@ const StickerBoard = () => {
     }
 
     const getSize = () => {
-        if (bubbleCount === 10) return 69
-        if (bubbleCount === 20) return 68
-        return 54
-    };
+        if (bubbleCount === 10) return 60
+        if (bubbleCount === 20) return 60
+        return 50
+    }
+
+    const handleStickerTypeChange = (type: string) => {
+        setStickerType(type)
+        updateStickerType(person.id, type)
+    }
+
+    const getParticle = (name: string): string => {
+        const lastChar = name.charCodeAt(name.length - 1)
+        const isKorean = (lastChar >= 0xAC00 && lastChar <= 0xD7A3)
+
+        if(!isKorean) return '를'
+
+        const hasFinalconsonant = (lastChar - 0xAC00) % 28 !== 0
+        return hasFinalconsonant ? '을' : '를'
+    }
+
+    const requestStoragePermission = async () => {
+        if(Platform.OS === 'android') {
+            const granted = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                {
+                    title: '저장소 권한 요청',
+                    message: '스크린샷을 저장하려면 저장소 권한이 필요합니다',
+                    buttonNeutral: '나중에',
+                    buttonNegative: '취소',
+                    buttonPositive: '허용'
+                }
+            )
+            return granted === PermissionsAndroid.RESULTS.GRANTED
+        }
+        return true
+    }
+
+    const captureStickerBoard = async () => {
+        const hasPermission = await requestStoragePermission()
+        if(!hasPermission) {
+            Alert.alert('저장소 권한이 없습니다')
+            return
+        }
+
+        shotRef.current.capture().then((uri: any) => {
+            const filePath = `${RNFS.DownloadDirectoryPath}/sticker_board_${Date.now()}.png`
+            RNFS.moveFile(uri, filePath)
+                .then(() => {
+                    Alert.alert('스크린샷이 갤러리에 저장되었습니다')
+                    if(Platform.OS === 'android') {
+                        CameraRoll.save(filePath, { type: 'photo' })
+                    }
+                })
+                .catch(error => {
+                    console.log('파일 저장 오류', error)
+                    Alert.alert('스크린샷 저장 중 오류가 발생했습니다')
+                })
+        }).catch((error: any) => {
+            console.log("캡처 오류", error)
+            Alert.alert("캡처 중 오류가 발생했습니다")
+        })
+    }
 
     const renderBubbles = () => {
         const bubbleSize = getSize()
@@ -161,7 +212,6 @@ const StickerBoard = () => {
                     {isFilled && (
                         <>
                             <Image
-                                // source={require('../../assets/image/whale_sticker.png')}
                                 source={getStickerImage()}
                                 style={{ 
                                     width: bubbleSize * 0.9, 
@@ -203,40 +253,83 @@ const StickerBoard = () => {
     
     return (
         <View style={styles.container}>
-            {/* <Image source={require('')} style={styles.background} resizeMode="cover" /> */}
-            <View style={styles.headerRow}>
-                <DropDownPicker
-                    open={countDropDownOpen}
-                    value={value}
-                    items={items}
-                    setOpen={setCountDropDownOpen}
-                    setValue={setValue}
-                    setItems={setItems}
-                    onChangeValue={(count) => handleCountChange(count as number)}
-                    containerStyle={{ width: 150 }}
-                    style={{ backgroundColor: '#FFF' }}
-                    dropDownContainerStyle={{ backgroundColor: '#FFF' }}
-                    labelStyle={{ fontWeight: 'bold', color: '#000' }}
-                    textStyle={{ fontSize: 15 }}
-                />
-                <DropDownPicker
-                    open={stickerDropDownOpen}
-                    value={stickerType}
-                    items={stickerItems}
-                    setOpen={setStickerDropDownOpen}
-                    setValue={setStickerType}
-                    setItems={setStickerItems}
-                    onChangeValue={(type) => setStickerType(type as string)}
-                    containerStyle={{ width: 150 }}
-                    style={{ backgroundColor: '#FFF' }}
-                    dropDownContainerStyle={{ backgroundColor: '#FFF' }}
-                    labelStyle={{ fontWeight: 'bold', color: '#000' }}
-                    textStyle={{ fontSize: 15 }}
+            <View style={styles.topAdBanner}>
+                <BannerAd
+                    unitId={TestIds.BANNER}
+                    // unitId="ca-app-pub-4250906367423857/2294027788"
+                    size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                    requestOptions={{
+                        requestNonPersonalizedAdsOnly: true
+                    }}
+                    onAdFailedToLoad={(error) => {
+                        console.log('배너 광고 Load 실패 : ', error)
+                    }}
                 />
             </View>
-            <View style={styles.overlay}>
-                <Text style={styles.title}>{person.name}님의 칭찬 스티커판</Text>
-                {<View style={styles.bubbleContainer}>{renderBubbles()}</View>}
+            {/* <Image source={require('')} style={styles.background} resizeMode="cover" /> */}
+            <View style={styles.contentContainer}>
+                <View style={styles.headerRow}>
+                    <DropDownPicker
+                        open={countDropDownOpen}
+                        value={value}
+                        items={items}
+                        setOpen={setCountDropDownOpen}
+                        setValue={setValue}
+                        setItems={setItems}
+                        onChangeValue={(count) => handleCountChange(count as number)}
+                        containerStyle={{ width: 150 }}
+                        style={{ backgroundColor: '#FFF' }}
+                        dropDownContainerStyle={{ backgroundColor: '#FFF' }}
+                        labelStyle={{ fontWeight: 'bold', color: '#000' }}
+                        textStyle={{ fontSize: 15 }}
+                    />
+                    <DropDownPicker
+                        open={stickerDropDownOpen}
+                        value={stickerType}
+                        items={stickerItems}
+                        setOpen={setStickerDropDownOpen}
+                        setValue={setStickerType}
+                        setItems={setStickerItems}
+                        onChangeValue={(type) => handleStickerTypeChange(type ?? 'whale')}
+                        containerStyle={{ width: 150 }}
+                        style={{ backgroundColor: '#FFF' }}
+                        dropDownContainerStyle={{ backgroundColor: '#FFF' }}
+                        labelStyle={{ fontWeight: 'bold', color: '#000' }}
+                        textStyle={{ fontSize: 15 }}
+                    />
+                    <TouchableOpacity onPress={captureStickerBoard}>
+                        <MaterialIcons name="screenshot" size={35} color="#333" />
+                    </TouchableOpacity>
+                </View>
+                <ViewShot ref={shotRef} options={{ format: 'png', quality: 0.9 }}>
+                    <View style={styles.overlay}>
+                        <View style={styles.titleCard}>
+                            <Text style={styles.title}>{person.name + getParticle(person.name)} 칭찬해 주세요</Text>
+                            <Image 
+                                source={require('../../assets/image/clapping.png')}
+                                style={{
+                                    height: 25,
+                                    width: 25,
+                                    resizeMode: 'contain'
+                                }}
+                            />
+                        </View>
+                        {<View style={styles.bubbleContainer}>{renderBubbles()}</View>}
+                    </View>
+                </ViewShot>
+            </View>
+            <View style={styles.bottomAdBanner}>
+                <BannerAd
+                    unitId={TestIds.BANNER}
+                    // unitId="ca-app-pub-4250906367423857/9843546440"
+                    size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                    requestOptions={{
+                        requestNonPersonalizedAdsOnly: true
+                    }}
+                    onAdFailedToLoad={(error) => {
+                        console.log('배너 광고 Load 실패 : ', error)
+                    }}
+                />
             </View>
         </View>
     )
@@ -250,16 +343,41 @@ const styles = StyleSheet.create({
         position: 'relative',
         backgroundColor: '#FFF'
     },
+    contentContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        marginTop: -90
+    },
+    topAdBanner: {
+        height: 60,
+        top: 0,
+        backgroundColor: '#EEE',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
     overlay: { 
-        flex: 1, 
         justifyContent: 'center', 
         alignItems: 'center', 
-        padding: 20 
+        paddingHorizontal: 20
+    },
+    titleCard: {
+        backgroundColor: '#FFF',
+        borderRadius: 8,
+        borderWidth: 1.5,
+        borderColor: '#BEE1ED',
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        marginBottom: 20,
+        alignItems: 'center',
+        width: width * 0.9,
+        flexDirection: 'row',
+        gap: 10,
+        justifyContent: 'center'
     },
     title: { 
         fontSize: 18, 
-        fontWeight: 'bold', 
-        marginBottom: 20 
+        fontWeight: 'bold',
+        color: '#333'
     },
     headerRow: {
         marginTop: 20,
@@ -285,4 +403,12 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 5,
     },
+    bottomAdBanner: {
+        position: 'absolute',
+        height: 60,
+        bottom: 0,
+        backgroundColor: '#EEE',
+        justifyContent: 'center',
+        alignItems: 'center'
+    }
 })

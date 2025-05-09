@@ -2,34 +2,18 @@ import { useNavigation } from '@react-navigation/native'
 import { useEffect, useState } from 'react'
 import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads'
-import { MMKV } from 'react-native-mmkv'
-import uuid from 'react-native-uuid'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
-
-interface PraisePerson {
-    id: string
-    name: string
-    stickerCount: number
-}
-
-const storage = new MMKV()
-const STORAGE_KEY = 'praise_people'
+import { PraisePerson, StickerState, usePraiseStore } from '../store/store'
 
 const HomeScreen = () => {
     const navigation = useNavigation<any>();
-    const [people, setPeople] = useState<PraisePerson[]>([])
     const [newName, setNewName] = useState('')
+    const { people, addPerson, removePerson, loadPeople } = usePraiseStore()
 
     const handleAddPerson = () => {
         if(!newName.trim()) return
 
-        const newList = [
-            ...people,
-            { id: uuid.v4().toString(), name: newName.trim(), stickerCount: 0 }
-        ]
-
-        setPeople(newList)
-        savePeopleToStorage(newList)
+        addPerson(newName.trim())
         setNewName('')
     }
 
@@ -37,22 +21,31 @@ const HomeScreen = () => {
         navigation.navigate('StickerBoard', { person })
     }
 
-    const savePeopleToStorage = (list: PraisePerson[]) => {
-        storage.set(STORAGE_KEY, JSON.stringify(list))
-    }
-
     useEffect(() => {
-        const saved = storage.getString(STORAGE_KEY)
-        if(saved) {
-            const parsed = JSON.parse(saved) as PraisePerson[]
-            setPeople(parsed)
-        }
+        loadPeople()
     }, [])
 
     const handleDelete = (id: string) => {
-        const newList = people.filter(p => p.id !== id)
-        setPeople(newList)
-        savePeopleToStorage(newList)
+        removePerson(id)
+    }
+
+    const getStickerImage = (stickerType: string) => {
+        switch (stickerType) {
+            case 'starfish':
+                return require('../../assets/image/starfish_sticker.png')
+            case 'shark':
+                return require('../../assets/image/shark_sticker.png')
+            case 'crab':
+                return require('../../assets/image/crab_sticker.png')
+            case 'octopus':
+                return require('../../assets/image/octopus_sticker.png')
+            default:
+                return require('../../assets/image/whale_sticker.png')
+        }
+    }
+
+    const getStickerCount = (stickers: { [key: number]: StickerState[] }, count: number): number => {
+        return stickers[count]?.filter(sticker => sticker.filled).length || 0
     }
 
     const renderItem = ({ item }: { item: PraisePerson }) => (
@@ -63,11 +56,15 @@ const HomeScreen = () => {
                     {[10, 20, 30].map((count, idx) => (
                         <View key={count} style={{ flexDirection: 'row', alignItems: 'center', marginLeft: idx === 0 ? 0 : 10 }}>
                             <Image
-                                source={require('../../assets/image/whale_sticker.png')}
+                                source={getStickerImage(item.stickerType)}
                                 style={{ height: 30, width: 30 }}
                             />
                             <Text style={{ fontSize: 12, marginHorizontal: 2 }}>✖️</Text>
-                            <Text style={styles.count}>{count} : <Text style={{ fontWeight: 'bold' }}>{item.stickerCount}</Text></Text>
+                            <Text style={styles.count}>
+                                {count} : <Text style={{ fontWeight: 'bold' }}>
+                                    {getStickerCount(item.stickers, count)}
+                                </Text>
+                            </Text>
                         </View>
                     ))}
                 </View>
