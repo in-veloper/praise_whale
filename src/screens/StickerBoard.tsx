@@ -6,7 +6,7 @@ import DropDownPicker from 'react-native-dropdown-picker'
 import { MMKV } from 'react-native-mmkv'
 import { usePraiseStore } from '../store/store'
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads'
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import Entypo from 'react-native-vector-icons/Entypo'
 import RNFS from 'react-native-fs'
 import ViewShot from 'react-native-view-shot'
@@ -352,57 +352,64 @@ const StickerBoard = () => {
                     }}
                 />
             </View>
-            {/* <Image source={require('')} style={styles.background} resizeMode="cover" /> */}
             <View style={styles.contentContainer}>
-                <View style={styles.headerRow}>
-                    <DropDownPicker
-                        open={countDropDownOpen}
-                        value={value}
-                        items={items}
-                        setOpen={setCountDropDownOpen}
-                        setValue={setValue}
-                        setItems={setItems}
-                        onChangeValue={(count) => handleCountChange(count as number)}
-                        containerStyle={{ width: 100 }}
-                        style={{ backgroundColor: '#FFF' }}
-                        dropDownContainerStyle={{ backgroundColor: '#FFF' }}
-                        labelStyle={{ fontWeight: 'bold', color: '#000' }}
-                        textStyle={{ fontSize: 15 }}
-                    />
-                    <DropDownPicker
-                        open={stickerDropDownOpen}
-                        value={stickerType}
-                        items={stickerItems}
-                        setOpen={setStickerDropDownOpen}
-                        setValue={setStickerType}
-                        setItems={setStickerItems}
-                        onChangeValue={(type) => handleStickerTypeChange(type ?? 'whale')}
-                        containerStyle={{ width: 120 }}
-                        style={{ backgroundColor: '#FFF' }}
-                        dropDownContainerStyle={{ backgroundColor: '#FFF' }}
-                        labelStyle={{ fontWeight: 'bold', color: '#000' }}
-                        textStyle={{ fontSize: 15 }}
-                    />
-                    <TouchableOpacity onPress={captureStickerBoard}>
-                        <MaterialIcons name="screenshot" size={33} color="#333" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={handleOpenCompletedStickerBoard}>
-                        <Entypo name="list" size={35} color="#333" />
-                    </TouchableOpacity>
+                <View style={styles.headerButtonRow}>
+                    <View style={styles.headerTitleContainer}>
+                        <Image
+                            source={require('../../assets/image/whale_sticker.png')}
+                            style={styles.headerImage}
+                        />
+                        <Text style={styles.headerTitle}>칭찬고래</Text>
+                    </View>
+                    <View style={styles.headerButtonGroup}>
+                        <TouchableOpacity onPress={captureStickerBoard} style={styles.headerButton}>
+                            <MaterialCommunityIcons name="cellphone-screenshot" size={20} color="#FFF" />
+                            <Text style={styles.headerButtonText}>캡처</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleOpenCompletedStickerBoard} style={styles.headerButton}>
+                            <Entypo name="list" size={20} color="#FFF" />
+                            <Text style={styles.headerButtonText}>완료 목록</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+                <View style={styles.headerDropdownRow}>
+                    <View style={styles.dropdownContainer}>
+                        <Text style={styles.dropdownLabel}>스티커 수</Text>
+                        <DropDownPicker
+                            open={countDropDownOpen}
+                            value={value}
+                            items={items}
+                            setOpen={setCountDropDownOpen}
+                            setValue={setValue}
+                            setItems={setItems}
+                            onChangeValue={(count) => handleCountChange(count as number)}
+                            containerStyle={{ width: 100 }}
+                            style={{ backgroundColor: '#FFF' }}
+                            dropDownContainerStyle={{ backgroundColor: '#FFF' }}
+                            labelStyle={{ fontWeight: 'bold', color: '#000' }}
+                            textStyle={{ fontSize: 15 }}
+                        />
+                    </View>
+                    <View style={styles.dropdownContainer}>
+                        <Text style={styles.dropdownLabel}>스티커 모양</Text>
+                        <DropDownPicker
+                            open={stickerDropDownOpen}
+                            value={stickerType}
+                            items={stickerItems}
+                            setOpen={setStickerDropDownOpen}
+                            setValue={setStickerType}
+                            setItems={setStickerItems}
+                            onChangeValue={(type) => handleStickerTypeChange(type ?? 'whale')}
+                            containerStyle={{ width: 120 }}
+                            style={{ backgroundColor: '#FFF' }}
+                            dropDownContainerStyle={{ backgroundColor: '#FFF' }}
+                            labelStyle={{ fontWeight: 'bold', color: '#000' }}
+                            textStyle={{ fontSize: 15 }}
+                        />
+                    </View>
                 </View>
                 <ViewShot ref={shotRef} options={{ format: 'png', quality: 0.9 }}>
                     <View style={styles.overlay}>
-                        <View style={styles.titleCard}>
-                            <Text style={styles.title}>{person.name + getParticle(person.name)} 칭찬해 주세요</Text>
-                            <Image 
-                                source={require('../../assets/image/clapping.png')}
-                                style={{
-                                    height: 25,
-                                    width: 25,
-                                    resizeMode: 'contain'
-                                }}
-                            />
-                        </View>
                         {<View style={styles.bubbleContainer}>{renderBubbles()}</View>}
                     </View>
                 </ViewShot>
@@ -550,32 +557,66 @@ const styles = StyleSheet.create({
         alignItems: 'center', 
         paddingHorizontal: 20
     },
-    titleCard: {
-        backgroundColor: '#FFF',
-        borderRadius: 8,
-        borderWidth: 1.5,
-        borderColor: '#BEE1ED',
-        paddingVertical: 7,
-        paddingHorizontal: 15,
-        marginBottom: 10,
-        alignItems: 'center',
-        width: width * 0.9,
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    headerButtonGroup: {
         flexDirection: 'row',
         gap: 10,
-        justifyContent: 'center'
+        marginRight: 15
     },
-    title: { 
-        fontSize: 18, 
-        fontWeight: 'bold',
-        color: '#333'
+    headerButtonRow: {
+        flexDirection: 'row',
+        marginTop: 15,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 10,
     },
-    headerRow: {
-        marginTop: 20,
+    headerTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        marginLeft: 10
+    },
+    headerImage: {
+        width: 50,
+        height: 50,
+        resizeMode: 'contain',
+    },
+    headerButton: {
+        flexDirection: 'row',
+        backgroundColor: '#227DBD',
+        paddingVertical: 7,
+        paddingHorizontal: 10,
+        borderRadius: 5,
+        gap: 5,
+        elevation: 10,
+    },
+    headerButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold'
+    },
+    headerDropdownRow: {
+        marginTop: 10,
         marginBottom: 20,
         alignItems: 'center',
         flexDirection: 'row',
         justifyContent: 'center',
-        gap: 10
+        gap: 7
+    },
+    dropdownContainer: {
+        alignItems: 'center',
+        marginBottom: 5,
+        flexDirection: 'row',
+        gap: 7
+    },
+    dropdownLabel: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 3,
     },
     bubbleContainer: {
         alignItems: 'center',
@@ -601,14 +642,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 10,
         alignSelf: 'flex-end',
-        marginTop: 3
+        marginTop: 5
     },
     cardButton: {
         backgroundColor: '#227DBD',
-        padding: 1,
         borderRadius: 5,
         alignItems: 'center',
-        paddingHorizontal: 5
+        paddingHorizontal: 7,
+        paddingVertical: 5
     },
     cardButtonText: {
         color: '#FFF',
@@ -627,6 +668,8 @@ const styles = StyleSheet.create({
         padding: 7,
         borderRadius: 7,
         alignItems: 'center',
+        elevation: 10,
+        paddingHorizontal: 15
     },
     buttonText: {
         color: '#FFF',
@@ -690,6 +733,7 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
         borderColor: '#BEE1ED',
         padding: 10,
+        paddingHorizontal: 20,
         borderRadius: 8,
         marginBottom: 8,
         width: '100%',
@@ -697,7 +741,7 @@ const styles = StyleSheet.create({
         color: '#333',
     },
     rewardCompletedCard: {
-        backgroundColor: '#F0F0F0',
+        backgroundColor: '#FFF',
         borderWidth: 1.5,
         borderColor: '#BEE1ED',
         padding: 10,
