@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
     },
     headerDropdownRow: {
         marginTop: 10,
-        marginBottom: 20,
+        marginBottom: 15,
         alignItems: 'center',
         flexDirection: 'row',
         justifyContent: 'center',
