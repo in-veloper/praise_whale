@@ -1,7 +1,7 @@
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import LottieView from 'lottie-react-native'
 import { JSX, useEffect, useRef, useState } from 'react'
-import { Alert, Dimensions, Image, ImageBackground, Modal, PermissionsAndroid, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { Alert, Dimensions, Image, ImageBackground, Linking, Modal, PermissionsAndroid, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import DropDownPicker from 'react-native-dropdown-picker'
 import { MMKV } from 'react-native-mmkv'
 import { usePraiseStore } from '../store/store'
@@ -96,14 +96,18 @@ const StickerBoard = () => {
     useEffect(() => {
         const foundPerson = people.find(p => p.id === person.id)
         if(foundPerson) {
-            const stickers = foundPerson.stickers[bubbleCount] || []
-            setFilled(stickers)
-            setStickerType(foundPerson.stickerType)
+            const stickers = [...(foundPerson.stickers[bubbleCount] || [])]
+            if(JSON.stringify(filled) !== JSON.stringify(stickers)) {
+                setFilled(stickers)
+            }
+            if(stickerType !== foundPerson.stickerType) {
+                setStickerType(foundPerson.stickerType)
+            }
         }else{
             setFilled([])
             setStickerType('whale')
         }
-    }, [person.id, bubbleCount])
+    }, [person.id, bubbleCount, people])
 
     const handlePress = (index: number) => {
         setFilled((prev) => {
@@ -163,7 +167,25 @@ const StickerBoard = () => {
                     buttonPositive: '허용'
                 }
             )
-            return granted === PermissionsAndroid.RESULTS.GRANTED
+            console.log(PermissionsAndroid.RESULTS.GRANTED)
+            if("granted" === PermissionsAndroid.RESULTS.GRANTED) {
+                return true
+            }else if("granted" === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+                Alert.alert(
+                    '권한 설정 필요',
+                    '저장소 권한이 필요합니다. 설정 페이지에서 권한을 허용해 주세요',
+                    [
+                        {
+                            text: '설정으로 이동',
+                            onPress: () => Linking.openSettings(),
+                        },
+                        { text: '취소', style: 'cancel' }
+                    ]
+                )
+                return false
+            }else{
+                return false
+            }
         }
         return true
     }
@@ -356,7 +378,7 @@ const StickerBoard = () => {
                 <View style={styles.headerButtonRow}>
                     <View style={styles.headerTitleContainer}>
                         <Image
-                            source={require('../../assets/image/whale_sticker.png')}
+                            source={require('../../android/app/src/main/res/drawable/logo.png')}
                             style={styles.headerImage}
                         />
                         <Text style={styles.headerTitle}>칭찬고래</Text>
@@ -576,7 +598,6 @@ const styles = StyleSheet.create({
     headerTitleContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 5,
         marginLeft: 10
     },
     headerImage: {
