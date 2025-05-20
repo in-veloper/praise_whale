@@ -243,7 +243,7 @@ const StickerBoard = () => {
     const checkCompletion = (stickers: StickerState[]) => {
         if(stickers.length === bubbleCount && stickers.every(sticker => sticker.filled)) {
             const completedAt = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
-            addCompletedBoard({
+            addCompletedBoard(person.id, {
                 id: uuid.v4().toString(),
                 name: person.name,
                 stickerCount: bubbleCount,
@@ -269,7 +269,7 @@ const StickerBoard = () => {
     }
 
     useEffect(() => {
-        loadCompletedBoards()
+        loadCompletedBoards(person.id)
     }, [])
 
     const handleOpenRewardModal = (id: string, reward: string) => {
@@ -285,7 +285,7 @@ const StickerBoard = () => {
 
     const handleSaveReward = () => {
         if(selectedBoardId) {
-            updateCompletedBoard(selectedBoardId, rewardText)
+            updateCompletedBoard(person.id, selectedBoardId, rewardText)
         }
         setIsRewardModalOpen(false)
         setRewardText('')
@@ -381,7 +381,7 @@ const StickerBoard = () => {
                             source={require('../../android/app/src/main/res/drawable/logo.png')}
                             style={styles.headerImage}
                         />
-                        <Text style={styles.headerTitle}>칭찬고래</Text>
+                        <Text style={styles.headerTitle}>{person.name}</Text>
                     </View>
                     <View style={styles.headerButtonGroup}>
                         <TouchableOpacity onPress={captureStickerBoard} style={styles.headerButton}>
@@ -491,10 +491,10 @@ const StickerBoard = () => {
                     <View style={styles.modalOverlay}>
                         <View style={styles.listModalContent}>
                             <Text style={styles.listModalTitle}>완료된 칭찬 스티커 목록</Text>
-                            {completedBoards.length === 0 ? (
+                            {!completedBoards[person.id] ? (
                                 <Text style={styles.noCompletedText}>아직 완료된 스티커 목록이 없어요!</Text>
                             ) : (
-                                completedBoards.map((board) => (
+                                completedBoards[person.id]?.map((board) => (
                                     <View key={board.id} style={[styles.completedCard, board.reward ? styles.rewardCompletedCard : null]}>
                                         <Text>
                                             {board.stickerCount}개짜리 스티커를 모두 채웠어요!
