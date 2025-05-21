@@ -53,20 +53,29 @@ const HomeScreen = () => {
             <View style={styles.cardLeft}>
                 <Text style={styles.name}>{item.name}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    {[10, 20, 30].map((count, idx) => (
-                        <View key={count} style={{ flexDirection: 'row', alignItems: 'center', marginLeft: idx === 0 ? 0 : 10 }}>
-                            <Image
-                                source={getStickerImage(item.stickerType)}
-                                style={{ height: 30, width: 30 }}
-                            />
-                            <Text style={{ fontSize: 12, marginHorizontal: 2 }}>✖️</Text>
-                            <Text style={styles.count}>
-                                {count} : <Text style={{ fontWeight: 'bold' }}>
-                                    {getStickerCount(item.stickers, count)}
+                    {(() => {
+                        const allZero = [10, 20, 30].every(
+                            (count) => getStickerCount(item.stickers, count) === 0
+                        )
+
+                        if(allZero) {
+                            return (
+                                <Text style={styles.count}>아직 받은 칭찬이 없어요!</Text>
+                            )
+                        }
+
+                        return [10, 20, 30].map((count, idx) => (
+                            <View key={count} style={{ flexDirection: 'row', alignItems: 'center', marginLeft: idx === 0 ? 0 : 15 }}>
+                                <Image
+                                    source={getStickerImage(item.stickerType)}
+                                    style={{ height: 30, width: 30 }}
+                                />
+                                <Text style={styles.count}>
+                                    {getStickerCount(item.stickers, count)} / {count}
                                 </Text>
-                            </Text>
-                        </View>
-                    ))}
+                            </View>
+                        ))
+                    })()}
                 </View>
             </View>
             <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.deleteButtonInside}>
@@ -97,7 +106,10 @@ const HomeScreen = () => {
                         value={newName}
                         onChangeText={setNewName}
                         placeholder="칭찬할 이름을 입력해 주세요!"
-                        style={styles.input}
+                        style={[styles.input, { textAlignVertical: 'center' }]}
+                        onSubmitEditing={handleAddPerson}
+                        multiline={false}
+                        returnKeyType='done'
                     />
                     <TouchableOpacity onPress={handleAddPerson} style={styles.addButton}>
                         <Text style={styles.addText}>추가</Text>
@@ -205,7 +217,8 @@ const styles = StyleSheet.create({
     count: { 
         fontSize: 14, 
         color: '#555',
-        marginLeft: 2
+        marginLeft: 5,
+        fontWeight: 'bold'
     },
     bottomAdBanner: {
         position: 'absolute',
