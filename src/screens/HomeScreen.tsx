@@ -212,13 +212,15 @@ const styles = StyleSheet.create({
     name: { 
         fontSize: 16, 
         fontWeight: '600',
+        fontFamily: 'OAGothic-Medium',
         marginBottom: 5
     },
     count: { 
-        fontSize: 14, 
+        fontSize: 13, 
         color: '#555',
-        marginLeft: 5,
-        fontWeight: 'bold'
+        marginLeft: 3,
+        fontWeight: '600',
+        fontFamily: 'OAGothic-Medium',
     },
     bottomAdBanner: {
         position: 'absolute',
