@@ -160,9 +160,9 @@ const styles = StyleSheet.create({
     },
     title: { 
         fontSize: 20, 
-        fontWeight: 'bold', 
         marginBottom: 20,
-        textAlign: 'center'
+        textAlign: 'center',
+        fontFamily: 'OAGothic-ExtraBold'
     },
     inputContainer: { 
         flexDirection: 'row', 
