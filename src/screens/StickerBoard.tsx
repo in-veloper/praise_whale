@@ -350,7 +350,7 @@ const StickerBoard = () => {
     
         return (
             <ImageBackground 
-                source={require('../../assets/image/wave_background.png')} 
+                source={require('../../assets/image/wave_background1.png')} 
                 style={styles.card}
                 imageStyle={{ borderRadius: 16, opacity: 0.2 }}
             >
@@ -408,8 +408,8 @@ const StickerBoard = () => {
                             containerStyle={{ width: 100 }}
                             style={{ backgroundColor: '#FFF' }}
                             dropDownContainerStyle={{ backgroundColor: '#FFF' }}
-                            labelStyle={{ fontWeight: 'bold', color: '#000' }}
-                            textStyle={{ fontSize: 15 }}
+                            labelStyle={{ color: '#000', fontFamily: 'OAGothic-Medium' }}
+                            textStyle={{ fontSize: 15, fontFamily: 'OAGothic-Medium' }}
                         />
                     </View>
                     <View style={styles.dropdownContainer}>
@@ -425,8 +425,8 @@ const StickerBoard = () => {
                             containerStyle={{ width: 120 }}
                             style={{ backgroundColor: '#FFF' }}
                             dropDownContainerStyle={{ backgroundColor: '#FFF' }}
-                            labelStyle={{ fontWeight: 'bold', color: '#000' }}
-                            textStyle={{ fontSize: 15 }}
+                            labelStyle={{ color: '#000', fontFamily: 'OAGothic-Medium' }}
+                            textStyle={{ fontSize: 15, fontFamily: 'OAGothic-Medium' }}
                         />
                     </View>
                 </View>
@@ -577,11 +577,13 @@ const styles = StyleSheet.create({
     overlay: { 
         justifyContent: 'center', 
         alignItems: 'center', 
-        paddingHorizontal: 20
+        paddingHorizontal: 20,
     },
     headerTitle: {
         fontSize: 20,
-        fontWeight: 'bold',
+        fontFamily: 'OAGothic-ExtraBold'
+        // fontWeight: 'bold',
+
     },
     headerButtonGroup: {
         flexDirection: 'row',
@@ -607,6 +609,7 @@ const styles = StyleSheet.create({
     },
     headerButton: {
         flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: '#227DBD',
         paddingVertical: 7,
         paddingHorizontal: 10,
@@ -617,7 +620,7 @@ const styles = StyleSheet.create({
     headerButtonText: {
         color: '#FFF',
         fontSize: 16,
-        fontWeight: 'bold'
+        fontFamily: 'OAGothic-Medium'
     },
     headerDropdownRow: {
         marginTop: 10,
@@ -635,7 +638,7 @@ const styles = StyleSheet.create({
     },
     dropdownLabel: {
         fontSize: 14,
-        fontWeight: 'bold',
+        fontFamily: 'OAGothic-Medium',
         color: '#333',
         marginBottom: 3,
     },
@@ -695,7 +698,7 @@ const styles = StyleSheet.create({
     buttonText: {
         color: '#FFF',
         fontSize: 16,
-        fontWeight: 'bold',
+        fontFamily: 'OAGothic-Medium'
     },
     bottomAdBanner: {
         position: 'absolute',

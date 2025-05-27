@@ -175,6 +175,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 10,
         marginRight: 10,
+        fontFamily: 'OAGothic-Medium'
     },
     addButton: {
         backgroundColor: '#227DBD',
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
     },
     addText: { 
         color: 'white', 
-        fontWeight: 'bold' 
+        fontFamily: 'OAGothic-Medium'
     },
     list: { 
         marginTop: 20,
